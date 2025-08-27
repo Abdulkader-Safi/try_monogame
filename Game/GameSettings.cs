@@ -4,6 +4,7 @@ namespace Game1;
 
 public static class GameSettings
 {
+    public const string Title = "Game";
     public const int PreferredBackBufferWidth = 1920;
     public const int PreferredBackBufferHeight = 1080;
     public const bool PreferMultiSampling = true;

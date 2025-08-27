@@ -19,6 +19,7 @@ public class Game1 : Game
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = GameSettings.ContentRootDirectory;
         IsMouseVisible = GameSettings.IsMouseVisible;
+        Window.Title = GameSettings.Title;
 
         _graphics.GraphicsProfile = GameSettings.GraphicsProfile;
         _graphics.PreferMultiSampling = GameSettings.PreferMultiSampling;
