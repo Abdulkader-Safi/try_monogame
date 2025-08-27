@@ -33,8 +33,6 @@ A 3D model viewer built with MonoGame that displays a cube model with interactiv
    - `dotnet build`
    - `dotnet run`
 
-```
-
 The application will open displaying a 3D cube model that you can rotate using the WASD keys.
 
 ## Project Structure
@@ -58,4 +56,7 @@ The application will open displaying a 3D cube model that you can rotate using t
 ![Game Screenshot](screenshot/screnshot1.png)
 
 _3D cube model rendered with MonoGame_
+
+```
+
 ```
