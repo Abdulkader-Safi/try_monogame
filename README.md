@@ -55,8 +55,4 @@ The application will open displaying a 3D cube model that you can rotate using t
 
 ![Game Screenshot](screenshot/screnshot1.png)
 
-_3D cube model rendered with MonoGame_
-
-```
-
-```
+> 3D cube model rendered with MonoGame
