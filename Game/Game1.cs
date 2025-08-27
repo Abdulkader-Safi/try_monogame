@@ -1,68 +1,40 @@
-using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 namespace Game1;
 
 public class Game1 : Game
 {
-    private GraphicsDeviceManager _graphics;
+    private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
-
-    private Model _model;
     private SpriteFont _font;
 
-    // Camera
-    private Matrix _view;
-    private Matrix _projection;
-    private float _angle;
-    private float _pitch;
-
-    // Keyboard state tracking for toggle functionality
-    private KeyboardState _previousKeyboardState;
-
-    // FPS tracking
-    private int _frameCount;
-    private TimeSpan _elapsedTime = TimeSpan.Zero;
-    private int _fps;
+    private Camera _camera;
+    private InputHandler _inputHandler;
+    private ModelRenderer _modelRenderer;
+    private FpsCounter _fpsCounter;
 
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
-        Content.RootDirectory = "Content";
-        IsMouseVisible = true;
+        Content.RootDirectory = GameSettings.ContentRootDirectory;
+        IsMouseVisible = GameSettings.IsMouseVisible;
 
-        // High quality graphics settings
-        _graphics.GraphicsProfile = GraphicsProfile.HiDef;
-        _graphics.PreferMultiSampling = true;
-
-        // Set higher resolution for better quality
-        _graphics.PreferredBackBufferWidth = 1920;
-        _graphics.PreferredBackBufferHeight = 1080;
+        _graphics.GraphicsProfile = GameSettings.GraphicsProfile;
+        _graphics.PreferMultiSampling = GameSettings.PreferMultiSampling;
+        _graphics.PreferredBackBufferWidth = GameSettings.PreferredBackBufferWidth;
+        _graphics.PreferredBackBufferHeight = GameSettings.PreferredBackBufferHeight;
     }
 
     protected override void Initialize()
     {
-        // Set up a simple camera
-        var cameraPos = new Vector3(0, 2, 6);
-        var target = Vector3.Zero;
-        var up = Vector3.Up;
+        _camera = new Camera();
+        _inputHandler = new InputHandler();
+        _modelRenderer = new ModelRenderer(GraphicsDevice);
+        _fpsCounter = new FpsCounter();
 
-        _view = Matrix.CreateLookAt(cameraPos, target, up);
-        _projection = Matrix.CreatePerspectiveFieldOfView(
-            MathHelper.ToRadians(45f),
-            GraphicsDevice.Viewport.AspectRatio,
-            0.1f,
-            100f
-        );
-
-        // Good defaults for 3D
-        GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-        GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-
-        // Set sampler state for smoother textures
-        GraphicsDevice.SamplerStates[0] = SamplerState.LinearWrap;
+        _camera.Initialize(GraphicsDevice);
+        _modelRenderer.Initialize();
 
         base.Initialize();
     }
@@ -70,58 +42,28 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _model = Content.Load<Model>("Models/ship"); // ship.fbx → "Models/ship"
-        _font = Content.Load<SpriteFont>("Font");
+        _font = Content.Load<SpriteFont>(GameSettings.FontPath);
 
-        // Debug: Check if model loaded and print mesh info
-        Console.WriteLine($"Model loaded successfully: {_model != null}");
-        if (_model != null)
-        {
-            Console.WriteLine($"Number of meshes: {_model.Meshes.Count}");
-            foreach (var mesh in _model.Meshes)
-            {
-                Console.WriteLine($"Mesh: {mesh.Name}, BoundingSphere radius: {mesh.BoundingSphere.Radius}");
-            }
-        }
+        var model = Content.Load<Model>(GameSettings.ModelPath);
+        _modelRenderer.LoadModel(model);
     }
 
     protected override void Update(GameTime gameTime)
     {
-        var keyboardState = Keyboard.GetState();
+        _inputHandler.Update(gameTime);
+        _fpsCounter.Update(gameTime);
 
-        if (keyboardState.IsKeyDown(Keys.Escape))
+        if (_inputHandler.ShouldExit)
             Exit();
 
-        // Toggle fullscreen with F key (only on key press, not hold)
-        if (keyboardState.IsKeyDown(Keys.F) && !_previousKeyboardState.IsKeyDown(Keys.F))
+        if (_inputHandler.ShouldToggleFullscreen)
         {
             _graphics.IsFullScreen = !_graphics.IsFullScreen;
             _graphics.ApplyChanges();
         }
 
-        float rotationSpeed = 3.5f; // radians per second
+        _camera.UpdateRotation(_inputHandler.AngleDelta, _inputHandler.PitchDelta);
 
-        // WASD rotation controls
-        if (keyboardState.IsKeyDown(Keys.A))
-            _angle -= rotationSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (keyboardState.IsKeyDown(Keys.D))
-            _angle += rotationSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (keyboardState.IsKeyDown(Keys.W))
-            _pitch -= rotationSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-        if (keyboardState.IsKeyDown(Keys.S))
-            _pitch += rotationSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-        // Calculate FPS
-        _frameCount++;
-        _elapsedTime += gameTime.ElapsedGameTime;
-        if (_elapsedTime >= TimeSpan.FromSeconds(1))
-        {
-            _fps = _frameCount;
-            _frameCount = 0;
-            _elapsedTime = TimeSpan.Zero;
-        }
-
-        _previousKeyboardState = keyboardState;
         base.Update(gameTime);
     }
 
@@ -129,33 +71,11 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
 
-        // Try different scales to make model visible
-        var world =
-            Matrix.CreateScale(0.01f) * // Very small scale first
-            Matrix.CreateRotationX(_pitch) *
-            Matrix.CreateRotationY(_angle) *
-            Matrix.CreateTranslation(0, 0, 0);
+        var world = _camera.CreateWorldMatrix();
+        _modelRenderer.Draw(world, _camera.View, _camera.Projection);
 
-        // Draw each mesh with BasicEffect
-        foreach (var mesh in _model.Meshes)
-        {
-            foreach (var effect in mesh.Effects)
-            {
-                if (effect is BasicEffect basicEffect)
-                {
-                    basicEffect.EnableDefaultLighting(); // quick lighting
-                    basicEffect.PreferPerPixelLighting = true;
-                    basicEffect.World = mesh.ParentBone.Transform * world;
-                    basicEffect.View = _view;
-                    basicEffect.Projection = _projection;
-                }
-            }
-            mesh.Draw();
-        }
-
-        // Draw FPS text at top of screen
         _spriteBatch.Begin();
-        _spriteBatch.DrawString(_font, $"FPS: {_fps}", new Vector2(10, 10), Color.White);
+        _fpsCounter.Draw(_spriteBatch, _font, new Vector2(10, 10), Color.White);
         _spriteBatch.End();
 
         base.Draw(gameTime);
