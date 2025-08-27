@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Game1;
 
-public class Game1 : Game
+public class GameStarter : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
@@ -14,7 +14,7 @@ public class Game1 : Game
     private ModelRenderer _modelRenderer;
     private FpsCounter _fpsCounter;
 
-    public Game1()
+    public GameStarter()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = GameSettings.ContentRootDirectory;
