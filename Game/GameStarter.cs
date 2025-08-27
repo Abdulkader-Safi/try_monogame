@@ -17,14 +17,14 @@ public class GameStarter : Game
     public GameStarter()
     {
         _graphics = new GraphicsDeviceManager(this);
-        Content.RootDirectory = GameSettings.ContentRootDirectory;
-        IsMouseVisible = GameSettings.IsMouseVisible;
-        Window.Title = GameSettings.Title;
+        Content.RootDirectory = GameSettings.contentRootDirectory;
+        IsMouseVisible = GameSettings.isMouseVisible;
+        Window.Title = GameSettings.title;
 
-        _graphics.GraphicsProfile = GameSettings.GraphicsProfile;
-        _graphics.PreferMultiSampling = GameSettings.PreferMultiSampling;
-        _graphics.PreferredBackBufferWidth = GameSettings.PreferredBackBufferWidth;
-        _graphics.PreferredBackBufferHeight = GameSettings.PreferredBackBufferHeight;
+        _graphics.GraphicsProfile = GameSettings.graphicsProfile;
+        _graphics.PreferMultiSampling = GameSettings.preferMultiSampling;
+        _graphics.PreferredBackBufferWidth = GameSettings.preferredBackBufferWidth;
+        _graphics.PreferredBackBufferHeight = GameSettings.preferredBackBufferHeight;
     }
 
     protected override void Initialize()
@@ -43,9 +43,9 @@ public class GameStarter : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _font = Content.Load<SpriteFont>(GameSettings.FontPath);
+        _font = Content.Load<SpriteFont>(GameSettings.fontPath);
 
-        var model = Content.Load<Model>(GameSettings.ModelPath);
+        var model = Content.Load<Model>(GameSettings.modelPath);
         _modelRenderer.LoadModel(model);
     }
 
